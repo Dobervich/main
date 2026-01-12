@@ -1,22 +1,21 @@
-# Story Dice for TTRPGs
+# RedNote Video Downloader
 
-A web application that lets you roll "story dice" for inspiration during tabletop RPG sessions.
+A simple web app to download videos from RedNote (Xiaohongshu) by pasting a share link.
 
 ## Features
 
-- **6 Different Dice Types:**
-  - Character (👑 Royalty, ⚔️ Warrior, 🧙 Wizard, etc.)
-  - Action (⚡ Attack, 🛡️ Defend, 🏃 Escape, etc.)
-  - Object (🗝️ Key, 📜 Scroll, 💎 Gem, etc.)
-  - Setting (🏰 Castle, 🌲 Forest, ⛰️ Mountain, etc.)
-  - Emotion (😡 Anger, 😨 Fear, 😊 Joy, etc.)
-  - Plot Twist (🔄 Reversal, 👥 Ally appears, 😈 Betrayal, etc.)
+- Paste any RedNote share URL (xhslink.com or xiaohongshu.com)
+- Extracts video information including title, author, and duration
+- Multiple quality options when available (H.264, H.265, AV1)
+- Direct MP4 download without watermarks
+- Clean, mobile-friendly interface
 
-- **Interactive Features:**
-  - Select any combination of dice to roll
-  - Animated dice rolling
-  - Visual results with symbols and labels
-  - Clear and roll again
+## How It Works
+
+1. The app accepts RedNote share links from the mobile app
+2. It resolves short URLs and extracts the video metadata from the page
+3. Parses the `window.__INITIAL_STATE__` JSON to find video stream URLs
+4. Provides direct download links for the MP4 files
 
 ## Getting Started
 
@@ -28,11 +27,15 @@ npm install
 
 ### Development
 
+Run both the frontend and backend in development mode:
+
 ```bash
 npm run dev
 ```
 
-Open your browser to the URL shown in the terminal (usually http://localhost:5173)
+This starts:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3001
 
 ### Build for Production
 
@@ -40,20 +43,29 @@ Open your browser to the URL shown in the terminal (usually http://localhost:517
 npm run build
 ```
 
-## How to Use
+## Usage
 
-1. Select which types of dice you want to roll by clicking on the buttons
-2. Click "Roll Dice" to get your story inspiration
-3. View your results and use them to spark creativity in your game
-4. Click "Clear Results" to start fresh
+1. Open the RedNote (Xiaohongshu) app on your phone
+2. Find a video you want to download
+3. Tap the share button and copy the link
+4. Paste the link in the app and click "Get Video"
+5. Choose your preferred quality and download
+
+## Technical Notes
+
+- Videos are served as MP4 files from Xiaohongshu's CDN
+- Share links contain an `xsec_token` that may expire
+- Rate limiting applies - avoid bulk downloads
+- For personal use only
 
 ## Technologies
 
-- React 18
+- React 19
 - TypeScript
 - Vite
-- CSS3 with animations
+- Express.js (backend)
+- Node.js fetch API
 
-## License
+## Disclaimer
 
-MIT
+This tool is for personal use only. Please respect content creators' rights and Xiaohongshu's terms of service.
