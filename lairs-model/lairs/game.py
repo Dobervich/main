@@ -127,6 +127,7 @@ class Obs:
         self.eligible = p.eligible
         self.treasures = p.treasures
         self.display = game.display
+        self.rng = game.bot_rng  # for bots to break ties; separate from the dice
         self.hustle_left, self.peer_free, self.forced = p.hustle_left, p.peer_free, p.forced
         self.turn = p.turns
         opp = game.players[1 - i]
@@ -178,6 +179,7 @@ class Game:
 
     def __init__(self, lairs, bots, seed=None, first=0, rules=None, deck=None):
         self.rng = random.Random(seed)
+        self.bot_rng = random.Random(self.rng.random())
         self.rules = rules or Rules()
         self.lairs = lairs
         self.bots = bots

@@ -119,7 +119,11 @@ class HeuristicBot:
     def _target(self, o, dist):
         def nearest(pred):
             cs = [c for c in dist if c != o.pos and pred(c)]
-            return min(cs, key=lambda c: (dist[c], c)) if cs else None
+            if not cs:
+                return None
+            best = min(dist[c] for c in cs)
+            # random tie-break: a fixed preference (say north-west first) is exploitable by lair builders
+            return o.rng.choice(sorted(c for c in cs if dist[c] == best))
 
         known = lambda f: (lambda c: c in o.known and o.feature(c) == f)
         leaving = o.eligible and self._want_exit(o)

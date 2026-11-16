@@ -7,6 +7,7 @@ lair optimiser. Pure Python, no dependencies (pytest for the tests).
 ```
 python experiments.py            # all experiments (~3 min); add --quick for a fast pass
 python experiments.py explorer   # or: dice | race | lairs
+python lair_study.py             # what makes a lair hard (~2 min)
 python -m pytest -q tests
 ```
 
@@ -38,62 +39,74 @@ Bots only see an `Obs`, which refuses to reveal Unknown spaces.
   (Spent before Fresh before Conserved, white before coloured).
 - "Locate" never happens in the base game, so it isn't modelled.
 
-## First findings
+## Findings
 
-All from `experiments.py`, bots playing random legal lairs unless stated.
-Win rates are against the baseline bot (Hustle to explore, hunt Blobs with
-3 dice, leave as soon as allowed); about +-2.5 points is noise.
+Bots playing random legal lairs unless stated. Win rates are against the
+baseline bot (Hustle to explore, hunt Blobs with 3 dice, leave as soon as
+allowed); about +-2.5 points is noise.
 
 **Dice.** Blob (6): 2 dice 36%, 3 dice 88%, 4 dice 99%. Pit (5): 2 dice 64%,
 3 dice 97%. Three dice at a fresh Blob is the cheapest kill however much a
 failed fight is assumed to cost.
 
-**It is a race.** In mirror matches the first player out wins 82% of games,
+**It is a race.** In mirror matches the first player out wins 84% of games,
 and whoever takes the first turn wins 57%. Games end around turn 6-7.
 
 | explorer change | win% vs baseline | solo turns to exit |
 |---|---|---|
-| baseline | 50 | 7.8 |
-| Peer into every unknown space | 28 | 9.4 |
-| Creep instead of Hustle | 45 | 8.2 |
-| don't use the Perception cube to Peer | 44 | 8.3 |
-| avoid Blobs unless required | 44 | 8.7 |
-| 2 dice at a Blob | 49 | 7.9 |
-| 4 dice at a Blob | 43 | 8.3 |
-| walk away from a Blob instead of waiting a turn | 44 | 8.2 |
-| stop to disarm a trap you fell into | 45 | 8.2 |
-| stay until all 3 chests are open | 46 | 9.4 |
-| stay for 3 chests and 3 Blobs | 41 | 10.6 |
-| attack under-strength to bank damage; trap dice 0 vs 2 vs 3; Conserve leftovers | 49-51 | ~7.8 |
+| baseline | 50 | 7.7 |
+| Peer into every unknown space | 28 | 9.5 |
+| Creep instead of Hustle | 43 | 8.1 |
+| don't use the Perception cube to Peer | 45 | 8.2 |
+| avoid Blobs unless required | 41 | 8.7 |
+| 2 dice at a Blob | 48 | 7.8 |
+| 4 dice at a Blob | 43 | 8.2 |
+| walk away from a Blob instead of waiting a turn | 44 | 8.1 |
+| stop to disarm a trap you fell into | 44 | 8.2 |
+| stay until all 3 chests are open | 43 | 9.5 |
+| stay for 3 chests and 3 Blobs | 38 | 10.8 |
+| attack under-strength to bank damage; trap dice 0 vs 2 vs 3; Conserve leftovers | 48-50 | ~7.7 |
 
-- Careful play loses. The Peer-everything bot takes 0.6 strikes a game
-  against 4.2 for the Hustler, and still wins only 28%.
-- The one cheap Peer (Perception cube) is worth using every turn.
-- Staying for more loot does raise VP (about +1.5) but hands the opponent the
-  4 VP exit bonus and the tiebreak more often than it pays.
+## Lair design (`lair_study.py`)
 
-**Lair building matters more than exploring.** Random legal lairs take the
-bots anywhere from 4.5 to 12.5 turns to escape (median 8.2); 17 vs 20 walls
-barely moves the average. A hill-climbed lair holds them for 15.7 turns and
-its builder wins 82% against builders of random lairs:
+1200 random legal lairs: explorers need 8.6 turns on average to get out
+(sd 1.2; 10th percentile 7.0, 90th 10.2). Wall count (17 vs 20) is irrelevant.
+What correlates with a slow lair:
+
+| feature | corr. with turns | effect |
+|---|---|---|
+| chests far from the exit | +0.46 | closest quarter 7.7 turns, farthest quarter 9.3 |
+| exit is a dead end (one way in) | +0.35 | 8.3 -> 9.4 |
+| hazards you must cross to reach the exit | +0.29 | none 8.3, one 8.9, two 9.4 |
+| chests far from the start / behind a hazard | +0.16 | about +0.5 turn |
+| start far from the exit | +0.15 | about +0.3 turn |
+| hazards near the start or exit, number of dead ends, Blob (vs Pit) on the exit route | ~0 | none |
+
+Random lairs that tick the first three boxes average 9.9 turns and their
+builder wins about 55%. Searched lairs do much better: eight independent
+hill-climbs reached 11.6-13.6 turns, and their builders beat random-lair
+builders 71-90% of the time with the baseline explorer, and 50-92% with three
+explorer styles the search never saw. Seven of the eight have a dead-end exit
+and all eight put at least one hazard on every route to it; chests average
+9.5 steps from the exit (random: 5.8). The two most robust:
 
 ```
-+---+---+---+---+---+---+
-| S   .   .   .   . | . |
-+---+   +   +   +---+   +
-| .   . | .   C | . | T |
-+---+---+   +   +   +   +
-| .   .   .   M   M   T |
-+   +   +---+---+   +---+
-| . | C   . | .   M   . |
-+   +   +   +---+   +   +
-| . | .   .   . | . | E |
-+   +   +   +   +   +   +
-| C | .   . | .   T | . |
-+---+---+---+---+---+---+
++---+---+---+---+---+---+     +---+---+---+---+---+---+
+| . | .   M   . | C   T |     | E | . | .   .   .   . |
++   +   +   +   +---+   +     +   +   +   +   +---+   +
+| .   .   .   .   .   . |     | . | . | C | .   .   M |
++   +---+---+   +---+---+     +   +   +---+---+---+   +
+| .   . | . | .   M   . |     | . | .   .   S   .   T |
++   +   +   +   +---+---+     +   +---+---+   +   +   +
+| .   T | T   .   S   . |     | T   .   . | .   . | . |
++   +   +---+---+---+   +     +   +---+   +   +   +   +
+| C | .   .   . | C   M |     | .   .   M   .   C | M |
++---+   +   +   +---+   +     +---+---+   +   +---+   +
+| .   .   .   E | .   . |     | .   .   .   T   . | C |
++---+---+---+---+---+---+     +---+---+---+---+---+---+
+ 79-88% across four bots       78-89% across four bots
 ```
 
-The exit sits in a pocket whose only door is a Blob, all three Blobs are
-stacked around that door, and the chests are on the far side of the board.
-This lair was tuned against these bots, so treat 82% as an upper bound: a
-human who guesses the pattern would do better.
+Caveat: these are tuned against heuristic bots that explore the nearest
+unknown space. A human who expects "exit at the end of a guarded corridor,
+far from the loot" will do better than the bots did.
